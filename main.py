@@ -2,6 +2,7 @@ import ttkbootstrap as ttk
 import tkinter as TK
 import threading
 from tkinter import filedialog
+from tkinter import messagebox
 from tkinter.messagebox import showerror, askyesno
 from tkinter import colorchooser
 from PIL import Image, ImageOps, ImageTk, ImageFilter, ImageGrab
@@ -29,13 +30,13 @@ class app(TK.Tk):
         self.canvas = ttk.Canvas(self, width=WIDTH, height=HEIGHT)
         self.canvas.pack()
 
-        self.image_filters = ["Sobel Edge Detected", "Color Inversion", "Black and White", "Gaussian Blur"]
-        filtercombobox = ttk.Combobox(self.leftFrame, values=self.image_filters, width=15)
-        filtercombobox.pack(pady=5, padx=10)
+        self.image_filters = ["Sobel Edge Detected", "Color Inversion", "Black and White", "Gaussian Blur", "Sharpen"]
+        self.filtercombobox = ttk.Combobox(self.leftFrame, values=self.image_filters, width=15)
+        self.filtercombobox.pack(pady=5, padx=10)
 
         # Addded threading so that the GUI doesn't hang while the 'extremely' fast image processing occurs
-        filtercombobox.bind("<<ComboboxSelected>>",
-                            lambda event: threading.Thread(self.applyfilter(filtercombobox.get())))
+        self.filtercombobox.bind("<<ComboboxSelected>>",
+                                 lambda event: threading.Thread(self.apply_filter(self.filtercombobox.get())))
 
         self.image_icon = ttk.PhotoImage(file='saveicon.png').subsample(12, 12)
         self.loadicon = ttk.PhotoImage(file='loadicon-removebg-preview.png').subsample(12, 12)
@@ -43,22 +44,28 @@ class app(TK.Tk):
         savebutton = ttk.Button(self.leftFrame, image=self.image_icon, bootstyle="light", command=self.save_image)
         savebutton.pack(pady=10)
 
-        loadbutton = ttk.Button(self.leftFrame, image=self.loadicon, bootstyle="light", command=self.loadImage)
+        loadbutton = ttk.Button(self.leftFrame, image=self.loadicon, bootstyle="light", command=self.load_image)
         loadbutton.pack(pady=10)
 
     # Write the code to show the image within the GUI
 
     # self.canvas.create_image(0, 0, anchor='nw', image=)
 
-    def applyfilter(self, grabbedfilter):
+    def apply_filter(self, grabbedfilter):
         global filepath, photo_image, filtered_image
 
         if grabbedfilter == self.image_filters[0]:
-            img = ImageProcessing.EdgeDetector(filepath)
+            img = ImageProcessing.edge_detector(filepath)
         elif grabbedfilter == self.image_filters[1]:
-            img = ImageProcessing.imageInversion(filepath)
+            img = ImageProcessing.image_inversion(filepath)
         elif grabbedfilter == self.image_filters[2]:
-            img = ImageProcessing.greyscaleimage(filepath)
+            img = ImageProcessing.greyscale_image(filepath)
+        elif grabbedfilter == self.image_filters[3]:
+            img = Image.open(filepath)
+            img = img.filter(ImageFilter.BLUR)
+        elif grabbedfilter == self.image_filters[4]:
+            img = Image.open(filepath)
+            img = img.filter(ImageFilter.SHARPEN)
 
         new_width = int((WIDTH / 2))
         filtered_image = img.resize((new_width, HEIGHT), Image.LANCZOS)
@@ -66,7 +73,7 @@ class app(TK.Tk):
         photo_image = ImageTk.PhotoImage(filtered_image)
         self.canvas.create_image(0, 0, anchor="nw", image=photo_image)
 
-    def loadImage(self):
+    def load_image(self):
         global filepath
         filepath = filedialog.askopenfilename(title="Open Image File",
                                               filetypes=[("Image Files", "*.jpg;*.jpeg;*.png;*.gif;*.bmp")])
@@ -84,15 +91,7 @@ class app(TK.Tk):
         self.update()
 
         if filepath:
-            x = self.canvas.winfo_rootx() + 45
-            y = self.canvas.winfo_rooty()
-            x1 = x + self.canvas.winfo_width() + 1
-            y1 = y + self.canvas.winfo_height() + 8
-
-            # create a new PIL Image object from the canvas
             image = filtered_image
-
-        image.show()
 
         file_path = filedialog.asksaveasfilename(defaultextension=".jpg")
 
@@ -101,7 +100,12 @@ class app(TK.Tk):
                 # save the image to a file
                 image.save(filepath)
 
+    def quit_program(self):
+        if messagebox.askokcancel("Quit", "Do you want to exit the program?"):
+            self.destroy()
+
 
 if __name__ == "__main__":
     application = app()
+    application.protocol("WM_DELETE_WINDOW", application.quit_program)
     application.mainloop()
