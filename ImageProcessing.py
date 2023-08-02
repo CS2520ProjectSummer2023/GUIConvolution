@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 
-def EdgeDetector(image):
+def edge_detector(image):
     """Open an image and perform the image convolution on it"""
 
     """Create a copy of the image so that we can place the new pixels onto"""
@@ -34,13 +34,13 @@ def EdgeDetector(image):
             kernelMatrix[2][0] = img.getpixel((i + 1, j - 1))
             kernelMatrix[2][1] = img.getpixel((i + 1, j))
             kernelMatrix[2][2] = img.getpixel((i + 1, j + 1))
-            edge = int(computeConvolution(kernelMatrix, Gx, Gy))
+            edge = int(compute_convolution(kernelMatrix, Gx, Gy))
             pixelsNew[i, j] = (edge)
 
     return imgNew
 
 
-def computeDirection(PixelMatrix, DirectionMatix):
+def compute_direction(PixelMatrix, DirectionMatix):
     directional_value = 0
     for i in range(3):
         for j in range(3):
@@ -49,14 +49,14 @@ def computeDirection(PixelMatrix, DirectionMatix):
     return directional_value
 
 
-def computeConvolution(PixelMatrix, XDirection, YDirection):
-    y_direction = computeDirection(PixelMatrix, YDirection)
-    x_direction = computeDirection(PixelMatrix, XDirection)
+def compute_convolution(PixelMatrix, XDirection, YDirection):
+    y_direction = compute_direction(PixelMatrix, YDirection)
+    x_direction = compute_direction(PixelMatrix, XDirection)
 
     return math.sqrt(math.pow(x_direction, 2) + math.pow(y_direction, 2))
 
 
-def greyscaleimage(image):
+def greyscale_image(image):
     img = Image.open(image)
     pixels = img.load()
     img.show()
@@ -71,7 +71,7 @@ def greyscaleimage(image):
     return img
 
 
-def imageInversion(image):
+def image_inversion(image):
     img = Image.open(image)
     pixels = img.load()
     height, width = img.size
