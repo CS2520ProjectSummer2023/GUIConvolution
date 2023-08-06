@@ -16,26 +16,26 @@ def edge_detector(image):
 
     height, width = img.size
 
-    kernelMatrix = numpy.zeros([3, 3], dtype=int)
-    XOperator = [-1, 0, 1], [-2, 0, 2], [-1, 0, 1]
-    YOperator = [1, 2, 1], [0, 0, 0], [-1, -2, -1]
+    kernel_matrix = numpy.zeros([3, 3], dtype=int)
+    x_operator = [-1, 0, 1], [-2, 0, 2], [-1, 0, 1]
+    y_operator = [1, 2, 1], [0, 0, 0], [-1, -2, -1]
 
-    Gx = numpy.array(XOperator)
-    Gy = numpy.array(YOperator)
+    gx = numpy.array(x_operator)
+    gy = numpy.array(y_operator)
 
     for i in range(1, height - 1):
         for j in range(1, width - 1):
-            kernelMatrix[0][0] = img.getpixel((i - 1, j - 1))
-            kernelMatrix[0][1] = img.getpixel((i - 1, j))
-            kernelMatrix[0][2] = img.getpixel((i - 1, j + 1))
-            kernelMatrix[1][0] = img.getpixel((i, j - 1))
-            kernelMatrix[1][1] = img.getpixel((i, j))
-            kernelMatrix[1][2] = img.getpixel((i, j + 1))
-            kernelMatrix[2][0] = img.getpixel((i + 1, j - 1))
-            kernelMatrix[2][1] = img.getpixel((i + 1, j))
-            kernelMatrix[2][2] = img.getpixel((i + 1, j + 1))
-            edge = int(compute_convolution(kernelMatrix, Gx, Gy))
-            pixelsNew[i, j] = (edge)
+            kernel_matrix[0][0] = img.getpixel((i - 1, j - 1))
+            kernel_matrix[0][1] = img.getpixel((i - 1, j))
+            kernel_matrix[0][2] = img.getpixel((i - 1, j + 1))
+            kernel_matrix[1][0] = img.getpixel((i, j - 1))
+            kernel_matrix[1][1] = img.getpixel((i, j))
+            kernel_matrix[1][2] = img.getpixel((i, j + 1))
+            kernel_matrix[2][0] = img.getpixel((i + 1, j - 1))
+            kernel_matrix[2][1] = img.getpixel((i + 1, j))
+            kernel_matrix[2][2] = img.getpixel((i + 1, j + 1))
+            edge = int(compute_convolution(kernel_matrix, gx, gy))
+            pixelsNew[i, j] = edge
 
     return imgNew
 
@@ -63,23 +63,25 @@ def greyscale_image(image):
     height, width = img.size
     for i in range(0, height):
         for j in range(0, width):
-            RGBTuple = img.getpixel((i, j))
-            greyScaleValue = ((0.299 * RGBTuple[0]) + (0.587 * RGBTuple[1]) + (0.114 * RGBTuple[2]))
-            pixels[i, j] = (int(greyScaleValue), int(greyScaleValue), int(greyScaleValue))
+            rgb_tuple = img.getpixel((i, j))
+            grey_scale_value = ((0.299 * rgb_tuple[0]) + (0.587 * rgb_tuple[1]) + (0.114 * rgb_tuple[2]))
+            pixels[i, j] = (int(grey_scale_value), int(grey_scale_value), int(grey_scale_value))
 
     return img
 
 
 def image_inversion(image):
+    """Invert the colors on an image"""
     img = Image.open(image)
     pixels = img.load()
     height, width = img.size
+    #Iterate over the image and apply the color inversion formula
     for i in range(0, height):
         for j in range(0, width):
-            RGBTuple = img.getpixel((i, j))
-            red = 255 - RGBTuple[0]
-            green = 255 - RGBTuple[1]
-            blue = 255 - RGBTuple[2]
+            rgb_tuple = img.getpixel((i, j))
+            red = 255 - rgb_tuple[0]
+            green = 255 - rgb_tuple[1]
+            blue = 255 - rgb_tuple[2]
 
             pixels[i, j] = (red, green, blue)
 
@@ -137,3 +139,23 @@ def normalize_matrix(k_matrix, sum, k_wdith):
     for x in range(k_wdith):
         for y in range(k_wdith):
             k_matrix[x][y] = k_matrix[x][y] / sum
+
+
+def sharpen_image(image):
+    """Sharpens and image by applying a blur, then subtracting it from the original, then adding it again"""
+    img = Image.open(image)
+    img_blurred = gaussian_blur(image)
+    pixels = img.load()
+    pixels_blurred = img_blurred.load()
+
+    height, width = img.size
+
+    for x in range(0, height):
+        for y in range(0, width):
+            rgb_tuple_original = pixels[x, y]
+            rgb_tuple_blurred = pixels_blurred[x, y]
+            pixels_blurred[x, y] = (int(2 * rgb_tuple_original[0] - rgb_tuple_blurred[0]),
+                                    int(2 * rgb_tuple_original[1] - rgb_tuple_blurred[1]),
+                                    int(2 * rgb_tuple_original[2] - rgb_tuple_blurred[2]))
+
+    return img_blurred
