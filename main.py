@@ -16,7 +16,7 @@ photo_image = None
 filtered_image = None
 
 
-class main_program_execution(TK.Tk):
+class MainWindow(TK.Tk):
     """Main driver for the GUI"""
 
     def __init__(self):
@@ -62,13 +62,14 @@ class main_program_execution(TK.Tk):
             elif grabbed_filter == self.image_filters[3]:
                 img = ImageProcessing.gaussian_blur(filepath)
             elif grabbed_filter == self.image_filters[4]:
-                img = Image.open(filepath)
-                img = img.filter(ImageFilter.SHARPEN)
+                img = ImageProcessing.sharpen_image(filepath)
 
             new_width = int((WIDTH / 2))
             filtered_image = img.resize((new_width, HEIGHT), Image.LANCZOS)
             photo_image = ImageTk.PhotoImage(filtered_image)
             self.canvas.create_image(0, 0, anchor="nw", image=photo_image)
+
+
 
         except AttributeError:
             showerror(title='Error', message="Cannot apply a filter to an empty image!")
@@ -111,6 +112,6 @@ class main_program_execution(TK.Tk):
 
 
 if __name__ == "__main__":
-    application = main_program_execution()
+    application = MainWindow()
     application.protocol("WM_DELETE_WINDOW", application.quit_program)
     application.mainloop()
