@@ -16,7 +16,9 @@ photo_image = None
 filtered_image = None
 
 
-class app(TK.Tk):
+class main_program_execution(TK.Tk):
+    """Main driver for the GUI"""
+
     def __init__(self):
 
         super().__init__()
@@ -26,54 +28,55 @@ class app(TK.Tk):
         self.geometry("510x580+300+110")
         self.leftFrame = ttk.Frame(self, width=200, height=600)
         self.leftFrame.pack(side="left", fill="y")
-
+        # Set up the canvas
         self.canvas = ttk.Canvas(self, width=WIDTH, height=HEIGHT)
         self.canvas.pack()
 
         self.image_filters = ["Sobel Edge Detected", "Color Inversion", "Black and White", "Gaussian Blur", "Sharpen"]
-        self.filtercombobox = ttk.Combobox(self.leftFrame, values=self.image_filters, width=15)
-        self.filtercombobox.pack(pady=5, padx=10)
+        self.filter_combobox = ttk.Combobox(self.leftFrame, values=self.image_filters, width=15)
+        self.filter_combobox.pack(pady=5, padx=10)
 
-        # Addded threading so that the GUI doesn't hang while the 'extremely' fast image processing occurs
-        self.filtercombobox.bind("<<ComboboxSelected>>",
-                                 lambda event: threading.Thread(self.apply_filter(self.filtercombobox.get())))
+        # Added threading so that the GUI doesn't hang while the 'extremely' fast image processing occurs
+        self.filter_combobox.bind("<<ComboboxSelected>>",
+                                  lambda event: threading.Thread(self.apply_filter(self.filter_combobox.get())))
 
         self.image_icon = ttk.PhotoImage(file='saveicon.png').subsample(12, 12)
-        self.loadicon = ttk.PhotoImage(file='loadicon-removebg-preview.png').subsample(12, 12)
+        self.load_icon = ttk.PhotoImage(file='loadicon-removebg-preview.png').subsample(12, 12)
 
-        savebutton = ttk.Button(self.leftFrame, image=self.image_icon, bootstyle="light", command=self.save_image)
-        savebutton.pack(pady=10)
+        save_button = ttk.Button(self.leftFrame, image=self.image_icon, bootstyle="light", command=self.save_image)
+        save_button.pack(pady=10)
 
-        loadbutton = ttk.Button(self.leftFrame, image=self.loadicon, bootstyle="light", command=self.load_image)
-        loadbutton.pack(pady=10)
+        load_button = ttk.Button(self.leftFrame, image=self.load_icon, bootstyle="light", command=self.load_image)
+        load_button.pack(pady=10)
 
-    # Write the code to show the image within the GUI
+    def apply_filter(self, grabbed_filter):
+        """Apply filters to an image, catches an attribute error if there is no image on the canvas to apply a filter"""
+        try:
+            global filepath, photo_image, filtered_image
+            if grabbed_filter == self.image_filters[0]:
+                img = ImageProcessing.edge_detector(filepath)
+            elif grabbed_filter == self.image_filters[1]:
+                img = ImageProcessing.image_inversion(filepath)
+            elif grabbed_filter == self.image_filters[2]:
+                img = ImageProcessing.greyscale_image(filepath)
+            elif grabbed_filter == self.image_filters[3]:
+                img = ImageProcessing.gaussian_blur(filepath)
+            elif grabbed_filter == self.image_filters[4]:
+                img = Image.open(filepath)
+                img = img.filter(ImageFilter.SHARPEN)
 
-    # self.canvas.create_image(0, 0, anchor='nw', image=)
+            new_width = int((WIDTH / 2))
+            filtered_image = img.resize((new_width, HEIGHT), Image.LANCZOS)
+            photo_image = ImageTk.PhotoImage(filtered_image)
+            self.canvas.create_image(0, 0, anchor="nw", image=photo_image)
 
-    def apply_filter(self, grabbedfilter):
-        global filepath, photo_image, filtered_image
-
-        if grabbedfilter == self.image_filters[0]:
-            img = ImageProcessing.edge_detector(filepath)
-        elif grabbedfilter == self.image_filters[1]:
-            img = ImageProcessing.image_inversion(filepath)
-        elif grabbedfilter == self.image_filters[2]:
-            img = ImageProcessing.greyscale_image(filepath)
-        elif grabbedfilter == self.image_filters[3]:
-            img = Image.open(filepath)
-            img = img.filter(ImageFilter.BLUR)
-        elif grabbedfilter == self.image_filters[4]:
-            img = Image.open(filepath)
-            img = img.filter(ImageFilter.SHARPEN)
-
-        new_width = int((WIDTH / 2))
-        filtered_image = img.resize((new_width, HEIGHT), Image.LANCZOS)
-
-        photo_image = ImageTk.PhotoImage(filtered_image)
-        self.canvas.create_image(0, 0, anchor="nw", image=photo_image)
+        except AttributeError:
+            showerror(title='Error', message="Cannot apply a filter to an empty image!")
+        except:
+            showerror(title='Error', message="Unknown Error, consult your nearest programmer!")
 
     def load_image(self):
+        """Load an image from your local filesystem. Allowed filetypes are .jpg, .jpeg, .png, .gif and bitmap files"""
         global filepath
         filepath = filedialog.askopenfilename(title="Open Image File",
                                               filetypes=[("Image Files", "*.jpg;*.jpeg;*.png;*.gif;*.bmp")])
@@ -87,6 +90,7 @@ class app(TK.Tk):
             self.canvas.create_image(0, 0, anchor="nw", image=image)
 
     def save_image(self):
+        """Save an image to the desired location"""
         global filepath, photo_image, image
         self.update()
 
@@ -101,11 +105,12 @@ class app(TK.Tk):
                 image.save(filepath)
 
     def quit_program(self):
+        """Quit the program, gracefully"""
         if messagebox.askokcancel("Quit", "Do you want to exit the program?"):
             self.destroy()
 
 
 if __name__ == "__main__":
-    application = app()
+    application = main_program_execution()
     application.protocol("WM_DELETE_WINDOW", application.quit_program)
     application.mainloop()
