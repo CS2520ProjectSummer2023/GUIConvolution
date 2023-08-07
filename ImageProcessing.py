@@ -1,7 +1,7 @@
 import numpy
 import math
 
-import numpy as np
+
 from PIL import Image
 
 
@@ -10,9 +10,9 @@ def edge_detector(image):
 
     """Create a copy of the image so that we can place the new pixels onto"""
     img = Image.open(image).convert("L")
-    imgNew = Image.open(image).convert("L")
-    pixels = img.load()
-    pixelsNew = imgNew.load()
+    img_new = Image.open(image).convert("L")
+
+    pixels_new = img_new.load()
 
     height, width = img.size
 
@@ -25,6 +25,7 @@ def edge_detector(image):
 
     for i in range(1, height - 1):
         for j in range(1, width - 1):
+            # Grab each pixel in a one pixel radius of pixel (i,j)
             kernel_matrix[0][0] = img.getpixel((i - 1, j - 1))
             kernel_matrix[0][1] = img.getpixel((i - 1, j))
             kernel_matrix[0][2] = img.getpixel((i - 1, j + 1))
@@ -35,28 +36,31 @@ def edge_detector(image):
             kernel_matrix[2][1] = img.getpixel((i + 1, j))
             kernel_matrix[2][2] = img.getpixel((i + 1, j + 1))
             edge = int(compute_convolution(kernel_matrix, gx, gy))
-            pixelsNew[i, j] = edge
+            pixels_new[i, j] = edge
 
-    return imgNew
+    return img_new
 
 
-def compute_direction(PixelMatrix, DirectionMatix):
+def compute_direction(pixel_matrix, direction_matrix):
+    """Compute the directional value of the pixels based on the passed in Direction Matrix"""
     directional_value = 0
     for i in range(3):
         for j in range(3):
-            directional_value = directional_value + (PixelMatrix[i][j] * DirectionMatix[i][j])
+            directional_value = directional_value + (pixel_matrix[i][j] * direction_matrix[i][j])
 
     return directional_value
 
 
-def compute_convolution(PixelMatrix, XDirection, YDirection):
-    y_direction = compute_direction(PixelMatrix, YDirection)
-    x_direction = compute_direction(PixelMatrix, XDirection)
+def compute_convolution(pixel_matrix, x_direction, y_direction):
+    """Compute the convolution of the pixel matrix based on the x and y direction of the pixel matrix"""
+    x_direction = compute_direction(pixel_matrix, x_direction)
+    y_direction = compute_direction(pixel_matrix, y_direction)
 
     return math.sqrt(math.pow(x_direction, 2) + math.pow(y_direction, 2))
 
 
 def greyscale_image(image):
+    """Apply a greyscale filter to an image using the greyscale formula of (.299 * R) + (.587 * G) + (0.114 * B)"""
     img = Image.open(image)
     pixels = img.load()
 
@@ -71,11 +75,11 @@ def greyscale_image(image):
 
 
 def image_inversion(image):
-    """Invert the colors on an image"""
+    """Invert the colors on an image by getting the inverse RGB of each pixel"""
     img = Image.open(image)
     pixels = img.load()
     height, width = img.size
-    #Iterate over the image and apply the color inversion formula
+    # Iterate over the image and apply the color inversion formula
     for i in range(0, height):
         for j in range(0, width):
             rgb_tuple = img.getpixel((i, j))
@@ -91,9 +95,8 @@ def image_inversion(image):
 def gaussian_blur(image):
     """Apply a gaussian blur to an image with the sigma set to 1, and the radius of the kernel set to 1"""
     img = Image.open(image)
-    imgNew = Image.open(image)
-    pixels = img.load()
-    pixelsNew = imgNew.load()
+    img_new = Image.open(image)
+    pixels_new = img_new.load()
 
     height, width = img.size
     radius = 1
@@ -109,19 +112,21 @@ def gaussian_blur(image):
             red = 0
             green = 0
             blue = 0
-
+            # Collect the RGB values of the pixels within a one pixel radius of (x,y) defined in the loops above
             for kernel_x in range(-radius, radius + 1):
                 for kernel_y in range(-radius, radius + 1):
+                    # Grab the RGB values and multiply them by the values within the weight matrix
                     kernel_value = kernel_matrix[kernel_x + radius][kernel_y + radius]
                     red += img.getpixel((x - kernel_x, y - kernel_y))[0] * kernel_value
                     green += img.getpixel((x - kernel_x, y - kernel_y))[1] * kernel_value
                     blue += img.getpixel((x - kernel_x, y - kernel_y))[2] * kernel_value
-            pixelsNew[x, y] = (int(red), int(green), int(blue))
+            # Place thew new pixels at position (x,y)
+            pixels_new[x, y] = (int(red), int(green), int(blue))
 
-    return imgNew
+    return img_new
 
 
-def compute_weight_matrix(k_matrix, sum, radius, sigma, width):
+def compute_weight_matrix(k_matrix, kernel_sum, radius, sigma, width):
     """Precomputes the weight matrix used for applying the gaussian blur to an image"""
     gauss_denominator = 1 / (2 * math.pi * sigma ** 2)
     for x in range(-radius, radius + 1):
@@ -129,16 +134,16 @@ def compute_weight_matrix(k_matrix, sum, radius, sigma, width):
             gauss_exponent = -((x ** 2) + (y ** 2)) / (2 * (sigma ** 2))
             gauss_value = gauss_denominator * (math.e ** gauss_exponent)
             k_matrix[x][y] = gauss_value
-            sum += gauss_value
+            kernel_sum += gauss_value
 
-    normalize_matrix(k_matrix, sum, width)
+    normalize_matrix(k_matrix, kernel_sum, width)
 
 
-def normalize_matrix(k_matrix, sum, k_wdith):
+def normalize_matrix(k_matrix, matrix_sum, k_width):
     """Normalize the weights in the matrix so that the entire matrix can add up to 1"""
-    for x in range(k_wdith):
-        for y in range(k_wdith):
-            k_matrix[x][y] = k_matrix[x][y] / sum
+    for x in range(k_width):
+        for y in range(k_width):
+            k_matrix[x][y] = k_matrix[x][y] / matrix_sum
 
 
 def sharpen_image(image):
@@ -150,6 +155,7 @@ def sharpen_image(image):
 
     height, width = img.size
 
+    # Sharpening pass for the image using a generic formula of 2 * (Original Image) - (Blurred Image)
     for x in range(0, height):
         for y in range(0, width):
             rgb_tuple_original = pixels[x, y]

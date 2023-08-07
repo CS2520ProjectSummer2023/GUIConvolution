@@ -1,11 +1,10 @@
-import ttkbootstrap as ttk
-import tkinter as TK
 import threading
-from tkinter import filedialog
-from tkinter import messagebox
+import tkinter as TK
+from tkinter import filedialog, messagebox
 from tkinter.messagebox import showerror, askyesno
-from tkinter import colorchooser
-from PIL import Image, ImageOps, ImageTk, ImageFilter, ImageGrab
+
+import ttkbootstrap as ttk
+from PIL import Image, ImageTk
 
 import ImageProcessing
 
@@ -26,13 +25,15 @@ class MainWindow(TK.Tk):
         self.title("Image Editor V1")
         self.resizable(0, 0)
         self.geometry("510x580+300+110")
+        # Set up the left frame that will house the buttons for the program
         self.leftFrame = ttk.Frame(self, width=200, height=600)
         self.leftFrame.pack(side="left", fill="y")
-        # Set up the canvas
+        # Set up the canvas that will display the images
         self.canvas = ttk.Canvas(self, width=WIDTH, height=HEIGHT)
         self.canvas.pack()
 
         self.image_filters = ["Sobel Edge Detected", "Color Inversion", "Black and White", "Gaussian Blur", "Sharpen"]
+        # Set up the dropdown containing the image filters
         self.filter_combobox = ttk.Combobox(self.leftFrame, values=self.image_filters, width=15)
         self.filter_combobox.pack(pady=5, padx=10)
 
@@ -67,6 +68,7 @@ class MainWindow(TK.Tk):
             new_width = int((WIDTH / 2))
             filtered_image = img.resize((new_width, HEIGHT), Image.LANCZOS)
             photo_image = ImageTk.PhotoImage(filtered_image)
+            # Place the image onto the canvas
             self.canvas.create_image(0, 0, anchor="nw", image=photo_image)
 
 
@@ -107,7 +109,7 @@ class MainWindow(TK.Tk):
 
     def quit_program(self):
         """Quit the program, gracefully"""
-        if messagebox.askokcancel("Quit", "Do you want to exit the program?"):
+        if messagebox.askokcancel("Quit", "Do you really want to exit the program?"):
             self.destroy()
 
 
