@@ -8,11 +8,23 @@ from PIL import Image, ImageTk
 
 import ImageProcessing
 
+
+"""The topic of this program is applying convolutions to discrete signals, the discrete signals in this case being 
+the images we can edit. There are several different convolutions and filters the program allows you to play around 
+with."""
+
+"""Authors: David Lara
+    Jomar Veloso"""
+
 filepath = ""
 WIDTH = 750
 HEIGHT = 560
 photo_image = None
 filtered_image = None
+
+"""To run the program, make sure that ttkbootstrap is installed, as well as the PILLOW image library. After that, 
+simply just run the main.py file in order to run the program. ImageProcessing.py is a file that contains file 
+definitions used in providing image filtering capabilities to the GUI."""
 
 
 class MainWindow(TK.Tk):
@@ -95,6 +107,7 @@ class MainWindow(TK.Tk):
     def save_image(self):
         """Save an image to the desired location"""
         global filepath, photo_image, image
+        #Update the screen
         self.update()
 
         if filepath:

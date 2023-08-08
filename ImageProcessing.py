@@ -36,6 +36,7 @@ def edge_detector(image):
             kernel_matrix[2][1] = img.getpixel((i + 1, j))
             kernel_matrix[2][2] = img.getpixel((i + 1, j + 1))
             edge = int(compute_convolution(kernel_matrix, gx, gy))
+            #Place the value of the edge into the pixel
             pixels_new[i, j] = edge
 
     return img_new
@@ -67,8 +68,11 @@ def greyscale_image(image):
     height, width = img.size
     for i in range(0, height):
         for j in range(0, width):
+            #Grab the tuple of RGB values at the specified pixel
             rgb_tuple = img.getpixel((i, j))
+            #Apply the greyscale formula
             grey_scale_value = ((0.299 * rgb_tuple[0]) + (0.587 * rgb_tuple[1]) + (0.114 * rgb_tuple[2]))
+            #Apple the greyscale value to each RGB value at that pixel
             pixels[i, j] = (int(grey_scale_value), int(grey_scale_value), int(grey_scale_value))
 
     return img
@@ -87,6 +91,7 @@ def image_inversion(image):
             green = 255 - rgb_tuple[1]
             blue = 255 - rgb_tuple[2]
 
+            #Place the new RGB values at pixel(i,j)
             pixels[i, j] = (red, green, blue)
 
     return img
@@ -101,14 +106,19 @@ def gaussian_blur(image):
     height, width = img.size
     radius = 1
     sigma = 1
+    #Initialize size of kernel based on radius
     kernel_width = (2 * radius) + 1
     kernel_matrix = numpy.zeros([kernel_width, kernel_width], dtype=float)
+    #Initialize kernel sum to 0
     kernel_sum = 0
 
+
+    #Precompute the weight matrix so it doesn't need to be computed multiple times
     compute_weight_matrix(kernel_matrix, kernel_sum, radius, sigma, kernel_width)
 
     for x in range(radius, height - radius):
         for y in range(radius, width - radius):
+            #Initialize the RGB values to zero
             red = 0
             green = 0
             blue = 0
@@ -127,13 +137,16 @@ def gaussian_blur(image):
 
 
 def compute_weight_matrix(k_matrix, kernel_sum, radius, sigma, width):
-    """Precomputes the weight matrix used for applying the gaussian blur to an image"""
+    """Precomputes the weight matrix used for applying the gaussian blur to an image.
+    This is done using the formula (1/(2* PI * Sigma ^2)) * e (^ -((x^2) + (y^2))/ (2* Sigma ^2))"""
     gauss_denominator = 1 / (2 * math.pi * sigma ** 2)
     for x in range(-radius, radius + 1):
         for y in range(-radius, radius + 1):
             gauss_exponent = -((x ** 2) + (y ** 2)) / (2 * (sigma ** 2))
             gauss_value = gauss_denominator * (math.e ** gauss_exponent)
+            #Place the gauss value into the kernel matrix based on the x and y loop variables
             k_matrix[x][y] = gauss_value
+            #Sum the gauss value into the running sum of the kernel sum
             kernel_sum += gauss_value
 
     normalize_matrix(k_matrix, kernel_sum, width)
